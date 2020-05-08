@@ -59,8 +59,8 @@ class ServerProtocol(asyncio.Protocol):
             logs.pop(10)  # списка последних сообщений
 
         for client in self.server.clients:
-            if (client.login != self.login) and client.login =="":  # отправка сообщений залогиненым
-                client.transport.write(message.encode())            # пользователям, кроме себя
+            if (client.login != self.login) and (client.login  != None):  # отправка сообщений залогиненым
+                client.transport.write(message.encode())                  # пользователям, кроме себя
 
     def send_history(self):  # метод для отправки последних 10-ти сообщений
         #        history = '\n'.join((logs))
