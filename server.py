@@ -1,3 +1,4 @@
+
 #
 # Серверное приложение для соединений
 #
@@ -6,7 +7,9 @@
 import asyncio
 from asyncio import transports
 
-logs =[""]*10                                       #cписок для последних 10-ти сообщений
+logs = [""] * 10  # cписок для последних 10-ти сообщений
+
+
 class ServerProtocol(asyncio.Protocol):
     login: str = None
     server: 'Server'
@@ -25,8 +28,8 @@ class ServerProtocol(asyncio.Protocol):
         else:
             if decoded.startswith("login:"):
                 self.login = decoded.replace("login:", "").replace("\r\n", "")
-                if self.login in self.server.logins:                        #проверяем, занят ли логин
-                    self.transport.write(f"логин {self.login} занят, придумайте новый\n".encode())   # логин уже занят
+                if self.login in self.server.logins:  # проверяем, занят ли логин
+                    self.transport.write(f"логин {self.login} занят, придумайте новый\n".encode())  # логин уже занят
                     print(f"Пытались ввести занятый логин: {self.login}")
                     self.transport.close()
 
@@ -34,8 +37,8 @@ class ServerProtocol(asyncio.Protocol):
                     self.transport.write(
                         f"Привет, {self.login}!\n".encode()
                     )
-                    self.server.logins.append(self.login)                   #добавляем новый логин в список занятых
-                    self.send_history()                                     #отправляем лог сообщений
+                    self.server.logins.append(self.login)  # добавляем новый логин в список занятых
+                    self.send_history()  # отправляем лог сообщений
 
             else:
                 self.transport.write("Неправильный логин\n".encode())
@@ -52,32 +55,32 @@ class ServerProtocol(asyncio.Protocol):
     def send_message(self, content: str):
         message = f"{self.login}: {content}"
         logs.insert(0, message)
-        if len(logs) > 10:                                       # очистка старых сообщений. избавление от переполнения
-            logs.pop(10)                                         # списка последних сообщений
-
+        if len(logs) > 10:  # очистка старых сообщений. избавление от переполнения
+            logs.pop(10)  # списка последних сообщений
 
         for client in self.server.clients:
-            if client.login != self.login:                       # отправка сообщений всем, кроме себя
-                client.transport.write(message.encode())
+            if (client.login != self.login) and client.login =="":  # отправка сообщений залогиненым
+                client.transport.write(message.encode())            # пользователям, кроме себя
 
-    def send_history(self):                                      # метод для отправки последних 10-ти сообщений
-#        history = '\n'.join((logs))
+    def send_history(self):  # метод для отправки последних 10-ти сообщений
+        #        history = '\n'.join((logs))
         self.transport.write("Последние 10 сообщений чата: \n\n".encode())
-        print(logs)                                              # Для проверки, очищается ли лог сообщений от старых
-        if logs [0] == "":                                       # не показывать пустой лог сообщений первому юзеру
+        print(logs)  # Для проверки, очищается ли лог сообщений от старых
+        if logs[0] == "":  # не показывать пустой лог сообщений первому юзеру
             self.transport.write("Пусто, вы первый пользователь чата: \n\n".encode())
         else:
 
-            for i in reversed(range(10)):                               # отправляем последние 10 сообщений в
-                self.transport.write((logs[i]).encode())                # в хронологическом порядке
+            for i in reversed(range(10)):  # отправляем последние 10 сообщений в
+                self.transport.write((logs[i]).encode())  # в хронологическом порядке
                 self.transport.write("\n".encode())
+
 
 class Server:
     clients: list
 
     def __init__(self):
         self.clients = []
-        self.logins =[]                                                 # список используемых логинов
+        self.logins = []  # список используемых логинов
 
     def build_protocol(self):
         return ServerProtocol(self)
